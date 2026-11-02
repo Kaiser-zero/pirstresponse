@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1045 &1
+EditorBuildSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Scenes:
+  - enabled: 0
+    path: Assets/Scenes/SampleScene.unity
+    guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 1
+    path: Assets/Scenes/Main Menu.unity
+    guid: 8e14e8245edbf03428202a1014668086
+  - enabled: 1
+    path: Assets/Scenes/Pilih map.unity
+    guid: 98d312bdd5cc9ac40a6c3baf4e3093a1
+  - enabled: 1
+    path: Assets/Scenes/Pantai.unity
+    guid: 970675ff4f1c36740ab2bfce14781a9b
+  - enabled: 1
+    path: Assets/Scenes/Gameplay sampah.unity
+    guid: 962d9cb18fc67704ca27acddf875a10f
+  - enabled: 1
+    path: Assets/Scenes/Scene_CPR.unity
+    guid: e93a2334b094be54b88d6faaa5d8e57a
+  m_configObjects:
+    com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

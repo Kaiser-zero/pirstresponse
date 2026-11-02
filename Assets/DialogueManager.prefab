@@ -1,0 +1,67 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &8474706076115984673
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8929748534108049776}
+  - component: {fileID: 5312401002804094319}
+  m_Layer: 0
+  m_Name: DialogueManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8929748534108049776
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8474706076115984673}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -626.20624, y: 723.82214, z: -1758.0078}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5312401002804094319
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8474706076115984673}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eff3e36a9a838ea45864b69baf0fa7ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueManager
+  dialoguePanel: {fileID: 0}
+  nextButtonObject: {fileID: 0}
+  dialogueText: {fileID: 0}
+  nextButton: {fileID: 0}
+  mascotImage: {fileID: 0}
+  mascotSprites:
+  - {fileID: -1761249682, guid: e81899d1998ad914aa41bb53cee50b6f, type: 3}
+  - {fileID: -116819619, guid: e81899d1998ad914aa41bb53cee50b6f, type: 3}
+  - {fileID: -135500022, guid: e81899d1998ad914aa41bb53cee50b6f, type: 3}
+  mascotObjects: []
+  dialogues:
+  - 'Halo, selamat datang di pantai ini!
+
+    aku akan menjelaskan sedikit tugasmu
+    hari ini '
+  - "Tugasmu adalah mengawasi pengunjung dan \nmemastikan mereka tetap aman"
+  - 'Kalau kamu melihat kondisi yang berbahaya
+
+    segera lakukan tindakan yang
+    tepat '
+  quest: {fileID: 0}
