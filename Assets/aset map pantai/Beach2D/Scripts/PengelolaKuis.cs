@@ -55,13 +55,18 @@ public class PengelolaKuis : MonoBehaviour
         PerbaruiSkor();
     }
 
+
     public void PilihSampah(SampahItem sampah)
     {
+        // Jangan izinkan memilih sampah lain
+        // selama panel kuis masih terbuka
+        if (panelKuis != null && panelKuis.activeSelf)
+            return;
+
         // Cegah pemilihan objek yang tidak valid
         if (sampah == null || sampah.sudahDipilah)
             return;
 
-        // Cegah mengganti sampah saat jawaban sebelumnya diproses
         if (jawabanSudahBenar)
             return;
 
@@ -85,17 +90,16 @@ public class PengelolaKuis : MonoBehaviour
             }
         }
 
-        // Perbarui pertanyaan dan feedback
         teksPertanyaan.text = "Sampah ini termasuk jenis apa?";
         teksFeedback.text = "";
 
         // Buka panel kuis
         panelKuis.SetActive(true);
 
-        // Aktifkan kembali tombol untuk soal baru
         tombolOrganik.interactable = true;
         tombolAnorganik.interactable = true;
     }
+
 
     void Jawab(bool pilihanOrganik)
     {
