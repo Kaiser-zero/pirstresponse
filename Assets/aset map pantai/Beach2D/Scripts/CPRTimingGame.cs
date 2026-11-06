@@ -3,6 +3,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.InputSystem;
 
 public class CPRTimingGame : MonoBehaviour
 {
@@ -15,7 +16,7 @@ public class CPRTimingGame : MonoBehaviour
     public RectTransform timingBar;
     public RectTransform indikatorBergerak;
     public RectTransform areaTargetMerah;
-    public Button tombolTimingBar;
+    public RectTransform ikonJantung;
 
     [Header("Teks UI")]
     public TMP_Text teksInstruksi;
@@ -51,7 +52,6 @@ public class CPRTimingGame : MonoBehaviour
             timingBar == null ||
             indikatorBergerak == null ||
             areaTargetMerah == null ||
-            tombolTimingBar == null ||
             teksProgress == null ||
             teksKesalahan == null)
         {
@@ -69,14 +69,7 @@ public class CPRTimingGame : MonoBehaviour
         panelGameplay.SetActive(true);
 
         // Jalankan kedua animasi
-        if (animatorKorban != null)
-            animatorKorban.speed = 1f;
-
-        if (animatorPenyelamat != null)
-            animatorPenyelamat.speed = 1f;
-
-        // Listener tombol timing
-        tombolTimingBar.onClick.AddListener(CekTiming);
+        AturKecepatanAnimasi(1f);
 
         // Persiapan timing bar
         HitungBatasGerak();
@@ -89,7 +82,7 @@ public class CPRTimingGame : MonoBehaviour
         if (gameSelesai)
             return;
 
-        // Gerakkan indikator bolak-balik
+        // Gerakkan indikator putih
         waktu += Time.deltaTime;
 
         float posisiX = Mathf.PingPong(
@@ -101,14 +94,37 @@ public class CPRTimingGame : MonoBehaviour
         posisi.x = posisiX;
 
         indikatorBergerak.anchoredPosition = posisi;
+
+        // Ikon jantung mengikuti target merah
+        if (ikonJantung != null)
+        {
+            Vector2 posisiJantung =
+                ikonJantung.anchoredPosition;
+
+            posisiJantung.x =
+                areaTargetMerah.anchoredPosition.x;
+
+            ikonJantung.anchoredPosition = posisiJantung;
+        }
+
+        // Tekan SPACE untuk mengecek timing
+        if (Keyboard.current != null &&
+            Keyboard.current.spaceKey.wasPressedThisFrame)
+        {
+            CekTiming();
+        }
     }
 
     void HitungBatasGerak()
     {
         float lebarBar = timingBar.rect.width;
-        float lebarIndikator = indikatorBergerak.rect.width;
 
-        batasGerak = (lebarBar - lebarIndikator) / 2f;
+        float lebarIndikator =
+            indikatorBergerak.rect.width;
+
+        batasGerak =
+            (lebarBar - lebarIndikator) / 2f;
+
         batasGerak = Mathf.Max(0f, batasGerak);
     }
 
@@ -128,7 +144,9 @@ public class CPRTimingGame : MonoBehaviour
              indikatorBergerak.rect.width) / 2f;
 
         // Periksa ketepatan timing
-        if (Mathf.Abs(posisiIndikator - posisiTarget) <= toleransi)
+        if (Mathf.Abs(
+            posisiIndikator - posisiTarget
+        ) <= toleransi)
         {
             jumlahBerhasil++;
 
@@ -163,7 +181,7 @@ public class CPRTimingGame : MonoBehaviour
             return;
         }
 
-        // Pindahkan target
+        // Pindahkan target merah
         PindahkanTarget();
     }
 
@@ -171,20 +189,12 @@ public class CPRTimingGame : MonoBehaviour
     {
         sedangBerhenti = true;
 
-        if (animatorKorban != null)
-            animatorKorban.speed = 0f;
-
-        if (animatorPenyelamat != null)
-            animatorPenyelamat.speed = 0f;
+        AturKecepatanAnimasi(0f);
 
         yield return new WaitForSeconds(durasiBerhenti);
 
         // Lanjutkan kedua animasi
-        if (animatorKorban != null)
-            animatorKorban.speed = 1f;
-
-        if (animatorPenyelamat != null)
-            animatorPenyelamat.speed = 1f;
+        AturKecepatanAnimasi(1f);
 
         sedangBerhenti = false;
     }
@@ -199,7 +209,9 @@ public class CPRTimingGame : MonoBehaviour
             batasGerak - setengahLebarTarget
         );
 
-        Vector2 posisi = areaTargetMerah.anchoredPosition;
+        Vector2 posisi =
+            areaTargetMerah.anchoredPosition;
+
         posisi.x = posisiAcak;
 
         areaTargetMerah.anchoredPosition = posisi;
@@ -220,7 +232,6 @@ public class CPRTimingGame : MonoBehaviour
     {
         gameSelesai = true;
 
-        // Pastikan animasi kembali normal
         AturKecepatanAnimasi(1f);
 
         panelGameplay.SetActive(false);
@@ -233,7 +244,6 @@ public class CPRTimingGame : MonoBehaviour
     {
         gameSelesai = true;
 
-        // Pastikan animasi kembali normal
         AturKecepatanAnimasi(1f);
 
         panelGameplay.SetActive(false);
@@ -249,13 +259,5 @@ public class CPRTimingGame : MonoBehaviour
 
         if (animatorPenyelamat != null)
             animatorPenyelamat.speed = kecepatan;
-    }
-
-    void OnDestroy()
-    {
-        if (tombolTimingBar != null)
-        {
-            tombolTimingBar.onClick.RemoveListener(CekTiming);
-        }
     }
 }
