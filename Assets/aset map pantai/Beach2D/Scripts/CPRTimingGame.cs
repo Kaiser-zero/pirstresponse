@@ -28,13 +28,21 @@ public class CPRTimingGame : MonoBehaviour
     public int targetBerhasil = 10;
     public int batasKesalahan = 3;
 
+    [Header("Feedback Salah")]
+    public GameObject frameSalah;
+    public float durasiFrameSalah = 0.5f;
+
+    [Header("Karakter CPR")]
+    public GameObject objekKorban;
+    public GameObject objekPenyelamat;
+    public GameObject karakterGagal;
+
     [Header("Animasi CPR")]
     public Animator animatorKorban;
     public Animator animatorPenyelamat;
     public float durasiBerhenti = 0.5f;
 
     private bool sedangBerhenti = false;
-
     private int jumlahBerhasil = 0;
     private int jumlahKesalahan = 0;
 
@@ -42,6 +50,8 @@ public class CPRTimingGame : MonoBehaviour
     private float batasGerak = 0f;
 
     private bool gameSelesai = false;
+
+    private Coroutine coroutineFrameSalah;
 
     void Start()
     {
@@ -55,10 +65,7 @@ public class CPRTimingGame : MonoBehaviour
             teksProgress == null ||
             teksKesalahan == null)
         {
-            Debug.LogError(
-                "CPRTimingGame: Referensi UI belum lengkap!"
-            );
-
+            Debug.LogError("CPRTimingGame: Referensi UI belum lengkap!");
             enabled = false;
             return;
         }
@@ -68,7 +75,21 @@ public class CPRTimingGame : MonoBehaviour
         panelKalah.SetActive(false);
         panelGameplay.SetActive(true);
 
-        // Jalankan kedua animasi
+        // Sembunyikan feedback dan karakter gagal
+        if (frameSalah != null)
+            frameSalah.SetActive(false);
+
+        if (karakterGagal != null)
+            karakterGagal.SetActive(false);
+
+        // Aktifkan karakter CPR normal
+        if (objekKorban != null)
+            objekKorban.SetActive(true);
+
+        if (objekPenyelamat != null)
+            objekPenyelamat.SetActive(true);
+
+        // Jalankan animasi
         AturKecepatanAnimasi(1f);
 
         // Persiapan timing bar
@@ -92,18 +113,13 @@ public class CPRTimingGame : MonoBehaviour
 
         Vector2 posisi = indikatorBergerak.anchoredPosition;
         posisi.x = posisiX;
-
         indikatorBergerak.anchoredPosition = posisi;
 
         // Ikon jantung mengikuti target merah
         if (ikonJantung != null)
         {
-            Vector2 posisiJantung =
-                ikonJantung.anchoredPosition;
-
-            posisiJantung.x =
-                areaTargetMerah.anchoredPosition.x;
-
+            Vector2 posisiJantung = ikonJantung.anchoredPosition;
+            posisiJantung.x = areaTargetMerah.anchoredPosition.x;
             ikonJantung.anchoredPosition = posisiJantung;
         }
 
@@ -118,13 +134,9 @@ public class CPRTimingGame : MonoBehaviour
     void HitungBatasGerak()
     {
         float lebarBar = timingBar.rect.width;
+        float lebarIndikator = indikatorBergerak.rect.width;
 
-        float lebarIndikator =
-            indikatorBergerak.rect.width;
-
-        batasGerak =
-            (lebarBar - lebarIndikator) / 2f;
-
+        batasGerak = (lebarBar - lebarIndikator) / 2f;
         batasGerak = Mathf.Max(0f, batasGerak);
     }
 
@@ -144,21 +156,27 @@ public class CPRTimingGame : MonoBehaviour
              indikatorBergerak.rect.width) / 2f;
 
         // Periksa ketepatan timing
-        if (Mathf.Abs(
-            posisiIndikator - posisiTarget
-        ) <= toleransi)
+        if (Mathf.Abs(posisiIndikator - posisiTarget) <= toleransi)
         {
             jumlahBerhasil++;
-
             Debug.Log("Timing berhasil!");
         }
         else
         {
             jumlahKesalahan++;
-
             Debug.Log("Timing meleset!");
 
-            // Hentikan kedua animasi sementara
+            // Tampilkan frame merah
+            if (frameSalah != null)
+            {
+                if (coroutineFrameSalah != null)
+                    StopCoroutine(coroutineFrameSalah);
+
+                coroutineFrameSalah =
+                    StartCoroutine(TampilkanFrameSalah());
+            }
+
+            // Hentikan animasi sementara
             if (!sedangBerhenti)
             {
                 StartCoroutine(BerhentiSementara());
@@ -185,6 +203,16 @@ public class CPRTimingGame : MonoBehaviour
         PindahkanTarget();
     }
 
+    IEnumerator TampilkanFrameSalah()
+    {
+        frameSalah.SetActive(true);
+
+        yield return new WaitForSeconds(durasiFrameSalah);
+
+        frameSalah.SetActive(false);
+        coroutineFrameSalah = null;
+    }
+
     IEnumerator BerhentiSementara()
     {
         sedangBerhenti = true;
@@ -193,8 +221,8 @@ public class CPRTimingGame : MonoBehaviour
 
         yield return new WaitForSeconds(durasiBerhenti);
 
-        // Lanjutkan kedua animasi
-        AturKecepatanAnimasi(1f);
+        if (!gameSelesai)
+            AturKecepatanAnimasi(1f);
 
         sedangBerhenti = false;
     }
@@ -209,11 +237,8 @@ public class CPRTimingGame : MonoBehaviour
             batasGerak - setengahLebarTarget
         );
 
-        Vector2 posisi =
-            areaTargetMerah.anchoredPosition;
-
+        Vector2 posisi = areaTargetMerah.anchoredPosition;
         posisi.x = posisiAcak;
-
         areaTargetMerah.anchoredPosition = posisi;
     }
 
@@ -244,8 +269,31 @@ public class CPRTimingGame : MonoBehaviour
     {
         gameSelesai = true;
 
-        AturKecepatanAnimasi(1f);
+        // Hentikan animasi CPR normal
+        AturKecepatanAnimasi(0f);
 
+        // Hilangkan karakter CPR normal
+        if (objekKorban != null)
+            objekKorban.SetActive(false);
+
+        if (objekPenyelamat != null)
+            objekPenyelamat.SetActive(false);
+
+        // Matikan frame merah jika masih muncul
+        if (coroutineFrameSalah != null)
+        {
+            StopCoroutine(coroutineFrameSalah);
+            coroutineFrameSalah = null;
+        }
+
+        if (frameSalah != null)
+            frameSalah.SetActive(false);
+
+        // Tampilkan karakter versi gagal
+        if (karakterGagal != null)
+            karakterGagal.SetActive(true);
+
+        // Tampilkan panel kalah
         panelGameplay.SetActive(false);
         panelKalah.SetActive(true);
 
