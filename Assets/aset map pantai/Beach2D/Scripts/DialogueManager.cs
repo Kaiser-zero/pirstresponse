@@ -11,6 +11,10 @@ public class DialogueManager : MonoBehaviour
     public TMP_Text dialogueText;
     public Button nextButton;
 
+    [Header("Klik Dialog")]
+    public AudioSource audioSource;
+    public AudioClip suaraKlik;
+
     [Header("Maskot")]
     public Image mascotImage;
     public Sprite[] mascotSprites;
@@ -60,6 +64,11 @@ public class DialogueManager : MonoBehaviour
         else
         {
             EndDialogue();
+        }
+
+        if (audioSource != null && suaraKlik != null)
+        {
+            audioSource.PlayOneShot(suaraKlik);
         }
     }
 

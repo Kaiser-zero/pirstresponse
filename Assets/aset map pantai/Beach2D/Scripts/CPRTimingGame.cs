@@ -12,6 +12,7 @@ public class CPRTimingGame : MonoBehaviour
     public GameObject panelMenang;
     public GameObject panelKalah;
 
+
     [Header("Timing Bar")]
     public RectTransform timingBar;
     public RectTransform indikatorBergerak;
@@ -32,10 +33,15 @@ public class CPRTimingGame : MonoBehaviour
     public GameObject frameSalah;
     public float durasiFrameSalah = 0.5f;
 
+    [Header("Sound Effect")]
+    public AudioSource audioSource;
+    public AudioClip suaraSalah;
+
     [Header("Karakter CPR")]
     public GameObject objekKorban;
     public GameObject objekPenyelamat;
     public GameObject karakterGagal;
+    public GameObject karakterBerhasil;
 
     [Header("Animasi CPR")]
     public Animator animatorKorban;
@@ -81,6 +87,9 @@ public class CPRTimingGame : MonoBehaviour
 
         if (karakterGagal != null)
             karakterGagal.SetActive(false);
+
+        if (karakterBerhasil != null)
+            karakterBerhasil.SetActive(false);
 
         // Aktifkan karakter CPR normal
         if (objekKorban != null)
@@ -166,6 +175,11 @@ public class CPRTimingGame : MonoBehaviour
             jumlahKesalahan++;
             Debug.Log("Timing meleset!");
 
+            if (audioSource != null && suaraSalah != null)
+            {
+                audioSource.PlayOneShot(suaraSalah);
+            }
+
             // Tampilkan frame merah
             if (frameSalah != null)
             {
@@ -174,6 +188,7 @@ public class CPRTimingGame : MonoBehaviour
 
                 coroutineFrameSalah =
                     StartCoroutine(TampilkanFrameSalah());
+
             }
 
             // Hentikan animasi sementara
@@ -257,12 +272,25 @@ public class CPRTimingGame : MonoBehaviour
     {
         gameSelesai = true;
 
-        AturKecepatanAnimasi(1f);
+        // Hentikan animasi CPR normal
+        AturKecepatanAnimasi(0f);
 
+        // Hilangkan karakter CPR normal
+        if (objekKorban != null)
+            objekKorban.SetActive(false);
+
+        if (objekPenyelamat != null)
+            objekPenyelamat.SetActive(false);
+
+        // Tampilkan karakter versi berhasil
+        if (karakterBerhasil != null)
+            karakterBerhasil.SetActive(true);
+
+        // Tampilkan panel kemenangan
         panelGameplay.SetActive(false);
         panelMenang.SetActive(true);
 
-        Debug.Log("PEMAIN MENANG!");
+        Debug.Log("PEMAIN BERHASIL!");
     }
 
     void Kalah()
