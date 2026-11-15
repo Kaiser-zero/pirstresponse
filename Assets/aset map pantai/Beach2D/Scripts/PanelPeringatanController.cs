@@ -20,6 +20,12 @@ public class PanelPeringatanController : MonoBehaviour
     public RectTransform gambarBantuan;
     public RectTransform buttonCobaLagiBantuan;
 
+    [Header("Audio Panel")]
+    public AudioSource audioSource;
+    public AudioClip suaraPilihanNPC;
+    public AudioClip suaraPeringatan;
+    public AudioClip suaraBantuan;
+
     [Header("Pengaturan Animasi")]
     public float durasiAnimasi = 0.5f;
     public float jarakTurun = 250f;
@@ -37,20 +43,21 @@ public class PanelPeringatanController : MonoBehaviour
 
     private void Awake()
     {
-        // Simpan posisi akhir panel peringatan
         posisiGambarPeringatan = gambarPeringatan.anchoredPosition;
         posisiTombolPeringatan = buttonCobaLagiPeringatkan.anchoredPosition;
 
-        // Simpan posisi akhir panel bantuan
         posisiGambarBantuan = gambarBantuan.anchoredPosition;
         posisiTombolBantuan = buttonCobaLagiBantuan.anchoredPosition;
     }
 
     private void Start()
     {
+        // Panel peringatan dan bantuan disembunyikan saat game dimulai.
         panelPeringatkan.SetActive(false);
         panelPanggilBantuan.SetActive(false);
 
+        // Panel utama tidak dibuka otomatis.
+        // Panel utama akan dibuka melalui tombol Quest.
         AturTransparansi(backgroundGelapPeringatkan);
         AturTransparansi(backgroundGelapBantuan);
     }
@@ -60,6 +67,20 @@ public class PanelPeringatanController : MonoBehaviour
         Color warna = background.color;
         warna.a = 0f;
         background.color = warna;
+    }
+
+    // =========================
+    // TAMPILKAN PANEL UTAMA
+    // =========================
+
+    public void TampilkanPilihanNPC()
+    {
+        panelPilihanNPC.SetActive(true);
+
+        if (audioSource != null && suaraPilihanNPC != null)
+        {
+            audioSource.PlayOneShot(suaraPilihanNPC);
+        }
     }
 
     // =========================
@@ -74,6 +95,11 @@ public class PanelPeringatanController : MonoBehaviour
 
         panelPilihanNPC.SetActive(false);
         panelPeringatkan.SetActive(true);
+
+        if (audioSource != null && suaraPeringatan != null)
+        {
+            audioSource.PlayOneShot(suaraPeringatan);
+        }
 
         animasiPanel = StartCoroutine(
             AnimasiPanel(
@@ -98,6 +124,11 @@ public class PanelPeringatanController : MonoBehaviour
 
         panelPilihanNPC.SetActive(false);
         panelPanggilBantuan.SetActive(true);
+
+        if (audioSource != null && suaraBantuan != null)
+        {
+            audioSource.PlayOneShot(suaraBantuan);
+        }
 
         animasiPanel = StartCoroutine(
             AnimasiPanel(
@@ -146,7 +177,6 @@ public class PanelPeringatanController : MonoBehaviour
 
             float smooth = Mathf.SmoothStep(0f, 1f, t);
 
-            // Gambar dan tombol turun bersamaan
             gambar.anchoredPosition = Vector2.Lerp(
                 awalGambar,
                 posisiAkhirGambar,
@@ -159,7 +189,6 @@ public class PanelPeringatanController : MonoBehaviour
                 smooth
             );
 
-            // Background menggelap
             warna.a = Mathf.Lerp(0f, tingkatGelap, smooth);
             background.color = warna;
 
@@ -190,7 +219,6 @@ public class PanelPeringatanController : MonoBehaviour
         panelPeringatkan.SetActive(false);
         panelPanggilBantuan.SetActive(false);
 
-        // Kembalikan panel pilihan
-        panelPilihanNPC.SetActive(true);
+        TampilkanPilihanNPC();
     }
 }

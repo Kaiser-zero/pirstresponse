@@ -9,9 +9,24 @@ public class CPRTimingGame : MonoBehaviour
 {
     [Header("Panel Gameplay")]
     public GameObject panelGameplay;
-    public GameObject panelMenang;
-    public GameObject panelKalah;
 
+    [Header("Panel Hasil Menang")]
+    public GameObject panelHasilMenang;
+    public TMP_Text teksSkorMenang;
+    public TMP_Text teksBerhasilMenang;
+    public TMP_Text teksKesalahanMenang;
+    public TMP_Text teksApresiasiMenang;
+
+    [Header("Panel Hasil Kalah")]
+    public GameObject panelHasilKalah;
+    public TMP_Text teksSkorKalah;
+    public TMP_Text teksBerhasilKalah;
+    public TMP_Text teksKesalahanKalah;
+    public TMP_Text teksApresiasiKalah;
+
+    [Header("Animasi Panel Hasil")]
+    public float jarakJatuh = 500f;
+    public float durasiJatuh = 0.6f;
 
     [Header("Timing Bar")]
     public RectTransform timingBar;
@@ -19,7 +34,7 @@ public class CPRTimingGame : MonoBehaviour
     public RectTransform areaTargetMerah;
     public RectTransform ikonJantung;
 
-    [Header("Teks UI")]
+    [Header("Teks UI Gameplay")]
     public TMP_Text teksInstruksi;
     public TMP_Text teksProgress;
     public TMP_Text teksKesalahan;
@@ -28,6 +43,7 @@ public class CPRTimingGame : MonoBehaviour
     public float kecepatanIndikator = 450f;
     public int targetBerhasil = 10;
     public int batasKesalahan = 3;
+    public int poinPerKeberhasilan = 100;
 
     [Header("Feedback Salah")]
     public GameObject frameSalah;
@@ -36,12 +52,12 @@ public class CPRTimingGame : MonoBehaviour
     [Header("Sound Effect")]
     public AudioSource audioSource;
     public AudioClip suaraSalah;
+    public AudioClip suaraBenar;
+    public AudioClip suaraPanelHasil;
 
     [Header("Karakter CPR")]
     public GameObject objekKorban;
     public GameObject objekPenyelamat;
-    public GameObject karakterGagal;
-    public GameObject karakterBerhasil;
 
     [Header("Animasi CPR")]
     public Animator animatorKorban;
@@ -57,14 +73,39 @@ public class CPRTimingGame : MonoBehaviour
 
     private bool gameSelesai = false;
 
+    private Vector2 posisiAsliPanelMenang;
+    private Vector2 posisiAsliPanelKalah;
+
     private Coroutine coroutineFrameSalah;
+    private Coroutine coroutinePanelHasil;
+
+    void Awake()
+    {
+        // Simpan posisi asli kedua panel sebelum disembunyikan.
+        if (panelHasilMenang != null)
+        {
+            RectTransform rect =
+                panelHasilMenang.GetComponent<RectTransform>();
+
+            if (rect != null)
+                posisiAsliPanelMenang = rect.anchoredPosition;
+        }
+
+        if (panelHasilKalah != null)
+        {
+            RectTransform rect =
+                panelHasilKalah.GetComponent<RectTransform>();
+
+            if (rect != null)
+                posisiAsliPanelKalah = rect.anchoredPosition;
+        }
+    }
 
     void Start()
     {
-        // Periksa referensi UI
         if (panelGameplay == null ||
-            panelMenang == null ||
-            panelKalah == null ||
+            panelHasilMenang == null ||
+            panelHasilKalah == null ||
             timingBar == null ||
             indikatorBergerak == null ||
             areaTargetMerah == null ||
@@ -76,32 +117,22 @@ public class CPRTimingGame : MonoBehaviour
             return;
         }
 
-        // Sembunyikan panel hasil
-        panelMenang.SetActive(false);
-        panelKalah.SetActive(false);
+        // Tampilkan gameplay dan sembunyikan kedua panel hasil.
         panelGameplay.SetActive(true);
+        panelHasilMenang.SetActive(false);
+        panelHasilKalah.SetActive(false);
 
-        // Sembunyikan feedback dan karakter gagal
         if (frameSalah != null)
             frameSalah.SetActive(false);
 
-        if (karakterGagal != null)
-            karakterGagal.SetActive(false);
-
-        if (karakterBerhasil != null)
-            karakterBerhasil.SetActive(false);
-
-        // Aktifkan karakter CPR normal
         if (objekKorban != null)
             objekKorban.SetActive(true);
 
         if (objekPenyelamat != null)
             objekPenyelamat.SetActive(true);
 
-        // Jalankan animasi
         AturKecepatanAnimasi(1f);
 
-        // Persiapan timing bar
         HitungBatasGerak();
         PindahkanTarget();
         PerbaruiUI();
@@ -109,10 +140,10 @@ public class CPRTimingGame : MonoBehaviour
 
     void Update()
     {
-        if (gameSelesai)
+        if (gameSelesai || sedangBerhenti)
             return;
 
-        // Gerakkan indikator putih
+        // Gerakkan indikator putih.
         waktu += Time.deltaTime;
 
         float posisiX = Mathf.PingPong(
@@ -124,7 +155,7 @@ public class CPRTimingGame : MonoBehaviour
         posisi.x = posisiX;
         indikatorBergerak.anchoredPosition = posisi;
 
-        // Ikon jantung mengikuti target merah
+        // Ikon jantung mengikuti target merah.
         if (ikonJantung != null)
         {
             Vector2 posisiJantung = ikonJantung.anchoredPosition;
@@ -132,7 +163,7 @@ public class CPRTimingGame : MonoBehaviour
             ikonJantung.anchoredPosition = posisiJantung;
         }
 
-        // Tekan SPACE untuk mengecek timing
+        // Tekan SPACE untuk mengecek timing.
         if (Keyboard.current != null &&
             Keyboard.current.spaceKey.wasPressedThisFrame)
         {
@@ -151,7 +182,7 @@ public class CPRTimingGame : MonoBehaviour
 
     void CekTiming()
     {
-        if (gameSelesai)
+        if (gameSelesai || sedangBerhenti)
             return;
 
         float posisiIndikator =
@@ -164,23 +195,22 @@ public class CPRTimingGame : MonoBehaviour
             (areaTargetMerah.rect.width +
              indikatorBergerak.rect.width) / 2f;
 
-        // Periksa ketepatan timing
         if (Mathf.Abs(posisiIndikator - posisiTarget) <= toleransi)
         {
             jumlahBerhasil++;
+
+            PutarSuara(suaraBenar);
+
             Debug.Log("Timing berhasil!");
         }
         else
         {
             jumlahKesalahan++;
+
+            PutarSuara(suaraSalah);
+
             Debug.Log("Timing meleset!");
 
-            if (audioSource != null && suaraSalah != null)
-            {
-                audioSource.PlayOneShot(suaraSalah);
-            }
-
-            // Tampilkan frame merah
             if (frameSalah != null)
             {
                 if (coroutineFrameSalah != null)
@@ -188,34 +218,32 @@ public class CPRTimingGame : MonoBehaviour
 
                 coroutineFrameSalah =
                     StartCoroutine(TampilkanFrameSalah());
-
             }
 
-            // Hentikan animasi sementara
-            if (!sedangBerhenti)
-            {
-                StartCoroutine(BerhentiSementara());
-            }
+            StartCoroutine(BerhentiSementara());
         }
 
         PerbaruiUI();
 
-        // Periksa kemenangan
         if (jumlahBerhasil >= targetBerhasil)
         {
-            Menang();
+            SelesaikanGame(true);
             return;
         }
 
-        // Periksa kekalahan
         if (jumlahKesalahan >= batasKesalahan)
         {
-            Kalah();
+            SelesaikanGame(false);
             return;
         }
 
-        // Pindahkan target merah
         PindahkanTarget();
+    }
+
+    void PutarSuara(AudioClip clip)
+    {
+        if (audioSource != null && clip != null)
+            audioSource.PlayOneShot(clip);
     }
 
     IEnumerator TampilkanFrameSalah()
@@ -244,13 +272,26 @@ public class CPRTimingGame : MonoBehaviour
 
     void PindahkanTarget()
     {
-        float setengahLebarTarget =
-            areaTargetMerah.rect.width / 2f;
+        float setengahLebarBar = timingBar.rect.width / 2f;
+        float setengahLebarTarget = areaTargetMerah.rect.width / 2f;
 
-        float posisiAcak = Random.Range(
-            -batasGerak + setengahLebarTarget,
-            batasGerak - setengahLebarTarget
-        );
+        float jarakAman = 40f;
+
+        float batasKiri =
+            -setengahLebarBar + jarakAman + setengahLebarTarget;
+
+        float batasKanan =
+            setengahLebarBar - jarakAman - setengahLebarTarget;
+
+        if (batasKiri > batasKanan)
+        {
+            Debug.LogWarning(
+                "Area target terlalu lebar untuk timing bar!"
+            );
+            return;
+        }
+
+        float posisiAcak = Random.Range(batasKiri, batasKanan);
 
         Vector2 posisi = areaTargetMerah.anchoredPosition;
         posisi.x = posisiAcak;
@@ -268,46 +309,13 @@ public class CPRTimingGame : MonoBehaviour
             " / " + batasKesalahan;
     }
 
-    void Menang()
+    void SelesaikanGame(bool menang)
     {
         gameSelesai = true;
 
-        // Hentikan animasi CPR normal
         AturKecepatanAnimasi(0f);
 
-        // Hilangkan karakter CPR normal
-        if (objekKorban != null)
-            objekKorban.SetActive(false);
-
-        if (objekPenyelamat != null)
-            objekPenyelamat.SetActive(false);
-
-        // Tampilkan karakter versi berhasil
-        if (karakterBerhasil != null)
-            karakterBerhasil.SetActive(true);
-
-        // Tampilkan panel kemenangan
-        panelGameplay.SetActive(false);
-        panelMenang.SetActive(true);
-
-        Debug.Log("PEMAIN BERHASIL!");
-    }
-
-    void Kalah()
-    {
-        gameSelesai = true;
-
-        // Hentikan animasi CPR normal
-        AturKecepatanAnimasi(0f);
-
-        // Hilangkan karakter CPR normal
-        if (objekKorban != null)
-            objekKorban.SetActive(false);
-
-        if (objekPenyelamat != null)
-            objekPenyelamat.SetActive(false);
-
-        // Matikan frame merah jika masih muncul
+        // Hentikan feedback salah jika masih berjalan.
         if (coroutineFrameSalah != null)
         {
             StopCoroutine(coroutineFrameSalah);
@@ -317,15 +325,146 @@ public class CPRTimingGame : MonoBehaviour
         if (frameSalah != null)
             frameSalah.SetActive(false);
 
-        // Tampilkan karakter versi gagal
-        if (karakterGagal != null)
-            karakterGagal.SetActive(true);
+        // Sembunyikan karakter gameplay.
+        if (objekKorban != null)
+            objekKorban.SetActive(false);
 
-        // Tampilkan panel kalah
-        panelGameplay.SetActive(false);
-        panelKalah.SetActive(true);
+        if (objekPenyelamat != null)
+            objekPenyelamat.SetActive(false);
 
-        Debug.Log("PEMAIN KALAH!");
+        // Sembunyikan kedua panel hasil terlebih dahulu.
+        panelHasilMenang.SetActive(false);
+        panelHasilKalah.SetActive(false);
+
+        // Hitung skor.
+        int skorAkhir = jumlahBerhasil * poinPerKeberhasilan;
+
+        RectTransform panelTerpilih;
+        Vector2 posisiAsliPanel;
+
+        if (menang)
+        {
+            panelTerpilih =
+                panelHasilMenang.GetComponent<RectTransform>();
+
+            posisiAsliPanel = posisiAsliPanelMenang;
+
+            IsiTeksHasil(
+                teksSkorMenang,
+                teksBerhasilMenang,
+                teksKesalahanMenang,
+                teksApresiasiMenang,
+                skorAkhir,
+                true
+            );
+
+            panelHasilMenang.SetActive(true);
+        }
+        else
+        {
+            panelTerpilih =
+                panelHasilKalah.GetComponent<RectTransform>();
+
+            posisiAsliPanel = posisiAsliPanelKalah;
+
+            IsiTeksHasil(
+                teksSkorKalah,
+                teksBerhasilKalah,
+                teksKesalahanKalah,
+                teksApresiasiKalah,
+                skorAkhir,
+                false
+            );
+
+            panelHasilKalah.SetActive(true);
+        }
+
+        // Putar suara panel hasil.
+        PutarSuara(suaraPanelHasil);
+
+        // Jalankan animasi panel yang terpilih.
+        if (panelTerpilih != null)
+        {
+            coroutinePanelHasil = StartCoroutine(
+                AnimasiPanelHasil(panelTerpilih, posisiAsliPanel)
+            );
+        }
+        else
+        {
+            Debug.LogWarning(
+                "Panel hasil belum memiliki RectTransform!"
+            );
+        }
+
+        Debug.Log(
+            (menang ? "CPR BERHASIL!" : "CPR GAGAL!") +
+            " Skor akhir: " + skorAkhir
+        );
+    }
+
+    void IsiTeksHasil(
+        TMP_Text teksSkor,
+        TMP_Text teksBerhasil,
+        TMP_Text teksKesalahan,
+        TMP_Text teksApresiasi,
+        int skor,
+        bool menang)
+    {
+        if (teksSkor != null)
+            teksSkor.text = skor.ToString();
+
+        if (teksBerhasil != null)
+        {
+            teksBerhasil.text =
+                "Benar: " + jumlahBerhasil + " / " + targetBerhasil;
+        }
+
+        if (teksKesalahan != null)
+        {
+            teksKesalahan.text =
+                "Salah: " + jumlahKesalahan + " / " + batasKesalahan;
+        }
+
+        if (teksApresiasi != null)
+        {
+            teksApresiasi.text = menang
+                ? "Luar biasa! Korban berhasil diselamatkan!"
+                : "Jangan menyerah! Ayo coba lagi!";
+        }
+    }
+
+    IEnumerator AnimasiPanelHasil(
+        RectTransform panel,
+        Vector2 posisiAsli)
+    {
+        Vector2 posisiAwal =
+            posisiAsli + Vector2.up * jarakJatuh;
+
+        panel.anchoredPosition = posisiAwal;
+
+        float waktuAnimasi = 0f;
+
+        while (waktuAnimasi < durasiJatuh)
+        {
+            waktuAnimasi += Time.unscaledDeltaTime;
+
+            float t = durasiJatuh > 0f
+                ? Mathf.Clamp01(waktuAnimasi / durasiJatuh)
+                : 1f;
+
+            float smooth = 1f - Mathf.Pow(1f - t, 3f);
+
+            panel.anchoredPosition = Vector2.Lerp(
+                posisiAwal,
+                posisiAsli,
+                smooth
+            );
+
+            yield return null;
+        }
+
+        panel.anchoredPosition = posisiAsli;
+        coroutinePanelHasil = null;
     }
 
     void AturKecepatanAnimasi(float kecepatan)
