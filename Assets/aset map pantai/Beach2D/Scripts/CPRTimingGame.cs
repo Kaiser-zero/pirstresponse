@@ -416,13 +416,13 @@ public class CPRTimingGame : MonoBehaviour
         if (teksBerhasil != null)
         {
             teksBerhasil.text =
-                "Benar: " + jumlahBerhasil + " / " + targetBerhasil;
+                " " + jumlahBerhasil + " / " + targetBerhasil;
         }
 
         if (teksKesalahan != null)
         {
             teksKesalahan.text =
-                "Salah: " + jumlahKesalahan + " / " + batasKesalahan;
+                " " + jumlahKesalahan + " / " + batasKesalahan;
         }
 
         if (teksApresiasi != null)
